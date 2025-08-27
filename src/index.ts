@@ -9,6 +9,8 @@ import {
   McpError,
 } from '@modelcontextprotocol/sdk/types.js';
 import { ConfluenceClient } from './confluence.js';
+import { NotionClient } from './notion.js';
+import { GoogleDocsClient } from './google-docs.js';
 
 interface ConfluencePageArgs {
   url: string;
@@ -228,27 +230,63 @@ class PrdReaderServer {
   }
 
   private async readNotionPage(args: NotionPageArgs) {
-    // TODO: Implement Notion API integration
-    return {
-      content: [
-        {
-          type: 'text',
-          text: `Reading Notion page: ${args.url}\n(Implementation coming next...)`
-        }
-      ]
-    };
+    try {
+      const client = new NotionClient({
+        token: args.token
+      });
+
+      const page = await client.getPageByUrl(args.url);
+
+      return {
+        content: [
+          {
+            type: 'text',
+            text: `# ${page.title}\n\n${page.content}\n\nSource: ${page.url}`
+          }
+        ]
+      };
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      return {
+        content: [
+          {
+            type: 'text',
+            text: `Error reading Notion page: ${errorMessage}`
+          }
+        ],
+        isError: true
+      };
+    }
   }
 
   private async readGoogleDoc(args: GoogleDocArgs) {
-    // TODO: Implement Google Docs API integration
-    return {
-      content: [
-        {
-          type: 'text',
-          text: `Reading Google Doc: ${args.url}\n(Implementation coming next...)`
-        }
-      ]
-    };
+    try {
+      const client = new GoogleDocsClient({
+        credentials: args.credentials
+      });
+
+      const doc = await client.getDocByUrl(args.url);
+
+      return {
+        content: [
+          {
+            type: 'text',
+            text: `# ${doc.title}\n\n${doc.content}\n\nSource: ${doc.url}`
+          }
+        ]
+      };
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      return {
+        content: [
+          {
+            type: 'text',
+            text: `Error reading Google Doc: ${errorMessage}`
+          }
+        ],
+        isError: true
+      };
+    }
   }
 
   async run(): Promise<void> {

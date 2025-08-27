@@ -9,3 +9,6 @@ dist/
 
 # local
 *.local
+
+# md local file
+*.local.md
