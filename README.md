@@ -1,4 +1,4 @@
-# PrdReader MCP
+# PrdReader MCP （WIP）
 
 A Model Context Protocol (MCP) server that provides read ability from Product Requirement Documents like Confluence, Notion and Google Docs, with AI summarization capabilities.
 
