@@ -11,6 +11,7 @@ import {
 import { ConfluenceClient } from './confluence.js';
 import { NotionClient } from './notion.js';
 import { GoogleDocsClient } from './google-docs.js';
+import { DocumentSummarizer } from './summarizer.js';
 
 interface ConfluencePageArgs {
   url: string;
@@ -26,6 +27,13 @@ interface NotionPageArgs {
 interface GoogleDocArgs {
   url: string;
   credentials: string;
+}
+
+interface SummarizeArgs {
+  content: string;
+  title?: string;
+  apiKey: string;
+  model?: string;
 }
 
 function isConfluencePageArgs(args: unknown): args is ConfluencePageArgs {
@@ -53,6 +61,15 @@ function isGoogleDocArgs(args: unknown): args is GoogleDocArgs {
     args !== null &&
     typeof (args as Record<string, unknown>).url === 'string' &&
     typeof (args as Record<string, unknown>).credentials === 'string'
+  );
+}
+
+function isSummarizeArgs(args: unknown): args is SummarizeArgs {
+  return (
+    typeof args === 'object' &&
+    args !== null &&
+    typeof (args as Record<string, unknown>).content === 'string' &&
+    typeof (args as Record<string, unknown>).apiKey === 'string'
   );
 }
 
@@ -145,6 +162,32 @@ class PrdReaderServer {
               },
               required: ['url', 'credentials']
             }
+          },
+          {
+            name: 'summarize_document',
+            description: 'Summarize document content using Claude AI',
+            inputSchema: {
+              type: 'object',
+              properties: {
+                content: {
+                  type: 'string',
+                  description: 'The document content to summarize'
+                },
+                title: {
+                  type: 'string',
+                  description: 'Optional document title for better context'
+                },
+                apiKey: {
+                  type: 'string',
+                  description: 'Anthropic Claude API key'
+                },
+                model: {
+                  type: 'string',
+                  description: 'Claude model to use (optional, defaults to claude-3-haiku-20240307)'
+                }
+              },
+              required: ['content', 'apiKey']
+            }
           }
         ]
       };
@@ -179,6 +222,14 @@ class PrdReaderServer {
               );
             }
             return await this.readGoogleDoc(args);
+          case 'summarize_document':
+            if (!isSummarizeArgs(args)) {
+              throw new McpError(
+                ErrorCode.InvalidParams,
+                'Invalid arguments for summarize_document'
+              );
+            }
+            return await this.summarizeDocument(args);
           default:
             throw new McpError(
               ErrorCode.MethodNotFound,
@@ -282,6 +333,37 @@ class PrdReaderServer {
           {
             type: 'text',
             text: `Error reading Google Doc: ${errorMessage}`
+          }
+        ],
+        isError: true
+      };
+    }
+  }
+
+  private async summarizeDocument(args: SummarizeArgs) {
+    try {
+      const summarizer = new DocumentSummarizer({
+        apiKey: args.apiKey,
+        model: args.model
+      });
+
+      const summary = await summarizer.summarize(args.content, args.title);
+
+      return {
+        content: [
+          {
+            type: 'text',
+            text: `## Document Summary\n\n${summary}`
+          }
+        ]
+      };
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      return {
+        content: [
+          {
+            type: 'text',
+            text: `Error summarizing document: ${errorMessage}`
           }
         ],
         isError: true

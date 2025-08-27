@@ -1,5 +1,4 @@
-import { google } from 'googleapis';
-import { JWT } from 'google-auth-library';
+import { google, Auth } from 'googleapis';
 
 export interface GoogleDocsConfig {
   credentials: string;
@@ -15,7 +14,7 @@ export interface GoogleDoc {
 export class GoogleDocsClient {
   private config: GoogleDocsConfig;
   private docs: any;
-  private auth: JWT;
+  private auth!: Auth.GoogleAuth;
 
   constructor(config: GoogleDocsConfig) {
     this.config = config;
@@ -30,9 +29,8 @@ export class GoogleDocsClient {
       throw new Error('Invalid JSON format in credentials');
     }
 
-    this.auth = new JWT({
-      email: credentials.client_email,
-      key: credentials.private_key,
+    this.auth = new google.auth.GoogleAuth({
+      credentials: credentials,
       scopes: ['https://www.googleapis.com/auth/documents.readonly'],
     });
 

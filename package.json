@@ -13,13 +13,21 @@
     "start": "node dist/index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": ["mcp", "confluence", "notion", "google-docs", "prd"],
+  "keywords": [
+    "mcp",
+    "confluence",
+    "notion",
+    "google-docs",
+    "prd"
+  ],
   "author": "",
   "license": "ISC",
   "packageManager": "pnpm@10.11.0",
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.24.3",
     "@modelcontextprotocol/sdk": "^1.17.4",
     "axios": "^1.6.0",
+    "google-auth-library": "^10.3.0",
     "googleapis": "^144.0.0"
   },
   "devDependencies": {
